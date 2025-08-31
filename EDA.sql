@@ -1,33 +1,59 @@
-# EDA
+/* --------------------------------------------------
+   Exploratory Data Analysis (EDA)
+   --------------------------------------------------
+   Goals:
+   1. Analyze country-level sales & contributions
+   2. Understand customer purchase behavior
+   3. Track active customers over time
+-------------------------------------------------- */
 
--- total sales by country/distribution
-SELECT Country, ROUND(AVG(total_sales),2) AS avg_total_sales 
-FROM ecommerce_orders_cleaned
-GROUP BY 1
-ORDER BY 2;
-
--- market contribution by each country
-SELECT country, ROUND(SUM(total_sales),2) AS totalsales,
-ROUND(100.0 * SUM(total_sales)/ (SELECT SUM(total_sales) FROM ecommerce_orders_cleaned),2) AS pct_contribution
-FROM ecommerce_orders_cleaned
-GROUP BY 1
-ORDER BY 3 DESC;
-
--- To show the distribution of total sales, average purchase size, and frequency of transactions
+-- 1. Average total sales by country
 SELECT 
-      customerID,
-      COUNT(*) AS transaction_frequency, -- Frequency of transactions
-      SUM(total_sales) AS total_sales, -- Total sales for the customer
-      AVG(total_sales) AS avg_purchase_size -- Average purchase size
+    Country, 
+    ROUND(AVG(total_sales), 2) AS avg_total_sales
 FROM ecommerce_orders_cleaned
-GROUP BY customerID
+GROUP BY Country
+ORDER BY avg_total_sales DESC;
+
+
+-- 2. Market contribution by each country
+SELECT 
+    Country, 
+    ROUND(SUM(total_sales), 2) AS total_sales,
+    ROUND(
+        100.0 * SUM(total_sales) / (SELECT SUM(total_sales) FROM ecommerce_orders_cleaned), 
+        2
+    ) AS pct_contribution
+FROM ecommerce_orders_cleaned
+GROUP BY Country
+ORDER BY pct_contribution DESC;
+
+
+-- 3. Customer-level purchase distribution
+--    - Frequency of transactions
+--    - Total spend
+--    - Average purchase size
+SELECT 
+    CustomerID,
+    COUNT(*) AS transaction_frequency,
+    SUM(total_sales) AS total_sales,
+    ROUND(AVG(total_sales), 2) AS avg_purchase_size
+FROM ecommerce_orders_cleaned
+GROUP BY CustomerID
 ORDER BY total_sales DESC;
 
--- How many unique customers are active over the selected timeframe?
-SELECT LEFT(invoiceDate,7) AS date, COUNT(DISTINCT customerID) AS active_customers
- FROM ecommerce_orders_cleaned
- WHERE InvoiceDate BETWEEN "2011-07-01" AND "2011-12-30"
- GROUP BY 1
- ORDER BY 1;
 
-SELECT COUNT(DISTINCT customerid) FROM ecommerce_orders_cleaned;
+-- 4. Monthly active customers (within timeframe)
+SELECT 
+    LEFT(InvoiceDate, 7) AS month, 
+    COUNT(DISTINCT CustomerID) AS active_customers
+FROM ecommerce_orders_cleaned
+WHERE InvoiceDate BETWEEN '2011-07-01' AND '2011-12-30'
+GROUP BY LEFT(InvoiceDate, 7)
+ORDER BY month;
+
+
+-- 5. Total unique customers in dataset
+SELECT 
+    COUNT(DISTINCT CustomerID) AS unique_customers
+FROM ecommerce_orders_cleaned;
